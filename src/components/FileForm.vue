@@ -1,50 +1,97 @@
 <template>
   <v-container fluid style="width: 45%;min-width: 370px;margin: auto;">
-    <v-alert border="top" colored-border type="info" elevation="2">
+    <v-alert border="top" colored-border type="info" elevation="2" icon="mdi-fire">
+      <div class="text-h6 font-weight-regular">
+        {{ packages.title }}
+      </div>
+      <v-divider class="my-4 info" style="opacity: 0.22"></v-divider>
       {{ packages.description }}
     </v-alert>
-    <v-card class="mx-auto">
-      <v-card-title class="text-h6 font-weight-regular justify-space-between">
-        <span>{{ packages.title }}</span>
-        <v-avatar color="primary lighten-2" class="subheading white--text" size="24" v-text="1" />
-      </v-card-title>
-      <div v-for="item in items" :key="item.id">
-        <v-card-text>
-          <v-text-field :label="item.title" :type="item.type" :value="item.value" />
-          <span v-if="item.description" class="text-caption grey--text text--darken-1">
-            {{ item.description }}
-          </span>
-        </v-card-text>
-      </div>
-      <v-card-text>
-        <v-file-input v-model="files" counter multiple prepend-icon="mdi-paperclip" truncate-length="30" placeholder="选择文件" label="文件输入" @change="filepaths.clear">
-          <template v-slot:selection="{ index, text }">
-            <v-chip v-if="index < 3" color="blue accent-4" dark label small>{{ text }}
-            </v-chip>
-            <span v-else-if="index === 3" class="text-overline grey--text text--darken-3 mx-2">
-              +{{ files.length - 3 }} 个文件
-            </span>
-          </template>
-        </v-file-input>
-      </v-card-text>
-      <v-divider />
-      <v-card-actions>
-        <v-btn text>
-          清空
+    <v-stepper v-model="step">
+      <v-stepper-header>
+        <v-stepper-step :complete="step > 1" step="1">Edit
+        </v-stepper-step>
+        <v-divider />
+        <v-stepper-step :complete="step > 2" step="2">Upload
+        </v-stepper-step>
+        <v-divider />
+        <v-stepper-step :complete="step > 3" step="3">Complete
+        </v-stepper-step>
+      </v-stepper-header>
+      <v-stepper-items>
+        <v-stepper-content step="1">
+          <v-card class="mx-auto">
+            <div v-for="item in items" :key="item.id">
+              <v-card-text>
+                <v-text-field :label="item.title" :type="item.type" :value="item.value" />
+                <span v-if="item.description" class="text-caption grey--text text--darken-1">
+                  {{ item.description }}
+                </span>
+              </v-card-text>
+            </div>
+            <v-card-text>
+              <v-file-input v-model="files" counter multiple prepend-icon="mdi-paperclip" truncate-length="20" placeholder="选择文件" label="文件输入">
+                <template v-slot:selection="{ index, text }">
+                  <v-chip v-if="index < 2" color="blue accent-4" dark label>{{ text }}
+                  </v-chip>
+                  <span v-else-if="index === 2" class="text-overline grey--text text--darken-3 mx-2">
+                    +{{ files.length - 2 }} 个文件
+                  </span>
+                </template>
+              </v-file-input>
+            </v-card-text>
+            <v-divider />
+            <v-card-actions style="margin-top: 10px;">
+              <v-btn text>
+                Clear
+              </v-btn>
+              <v-spacer />
+              <v-btn color="primary" depressed @click="upload">
+                Continue
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-stepper-content>
+      </v-stepper-items>
+      <v-stepper-items>
+        <v-stepper-content step="2">
+          <v-card class="mx-auto">
+            <v-card-text>
+              <v-list disabled>
+                <v-subheader><strong>文件上传</strong></v-subheader>
+                <v-list-item-group v-model="files" color="primary">
+                  <div v-for="item in files" :key="item.id">
+                    <UploadProcess ref="uploader" :token="token" :file="item" :keys="item.name" />
+                  </div>
+                </v-list-item-group>
+              </v-list>
+            </v-card-text>
+            <v-divider />
+            <v-card-actions style="margin-top: 10px;">
+              <v-btn text @click="step -= 1">
+                Cancel
+              </v-btn>
+              <v-spacer />
+              <v-btn color="primary" depressed @click="submit">
+                Submit
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-stepper-content>
+      </v-stepper-items>
+    </v-stepper>
+    <v-snackbar v-model="snackbar" timeout="3000">
+      <strong>{{ message }}</strong>
+      <template v-slot:action="{ attrs }">
+        <v-btn color="pink" text v-bind="attrs" @click="snackbar = false">
+          Close
         </v-btn>
-        <v-spacer />
-        <v-btn v-if="files.length === filepaths.length" :disabled="false" color="primary" depressed @click="submit">
-          提交
-        </v-btn>
-        <v-btn v-if="files.length != filepaths.length" color="primary" depressed @click="upload">
-          上传
-        </v-btn>
-      </v-card-actions>
-    </v-card>
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 <script>
-import * as qiniu from 'qiniu-js'
+import UploadProcess from './UploadProcess';
 
 export default {
   data: () => ({
@@ -62,12 +109,6 @@ export default {
         'value': '',
       },
       {
-        'title': '姓名',
-        'description': '',
-        'type': 'text',
-        'value': '',
-      },
-      {
         'title': '密码',
         'description': 'Please enter a password for your account',
         'type': 'password',
@@ -75,41 +116,45 @@ export default {
       },
     ],
     files: [],
-    filepaths: [],
-    token: 'AXQ_kgGwAC1sBnZkwUGpgFDF0PFNNX6o7y6yAkpG:VfW4efclMdnXJk801IS0GigPnuY=:eyJzY29wZSI6InNwb25neGluIiwiZGVhZGxpbmUiOjE2NTAwNDEwNDR9',
-    uploading: false,
-    submitting: false,
+    token: 'AXQ_kgGwAC1sBnZkwUGpgFDF0PFNNX6o7y6yAkpG:F4yLvXhDotft8JDP4wGcz7THXzs=:eyJzY29wZSI6InNwb25neGluIiwiZGVhZGxpbmUiOjE2NTAxMjA3NDl9',
+    step: 1,
+    snackbar: false,
+    message: '',
   }),
 
   props: {
     identifier: String,
   },
 
+  components: {
+    UploadProcess,
+  },
+
   methods: {
-    submit() {
-      console.log(this.identifier);
-    },
-    upload_single_file(file, key) {
-      let observable = qiniu.upload(file, key, this.token);
-      let that = this;
-      observable.subscribe({
-        next(res) {
-          console.log(file, res.total);
-        },
-        error(res) {
-          console.log(file, 'upload error', res);
-        },
-        complete(res) {
-          that.filepaths.push(res.key);
-          console.log(res);
+    uploadState() {
+      for (var i = this.files.length - 1; i >= 0; i--) {
+        if (Object.hasOwnProperty.call(this.files[i], 'err') || !Object.hasOwnProperty.call(this.files[i], 'res')) {
+          return false;
         }
-      });
+      }
+      return true;
     },
     upload() {
-      //todo 设置上传动画
-      for (var i = 0; i < this.files.length; i++) {
-        this.upload_single_file(this.files[i], this.files[i]);
+      this.step += 1;
+      let uploaders = this.$refs.uploader;
+      if (uploaders) {
+        for (var i = uploaders.length - 1; i >= 0; i--) {
+          uploaders[i].upload();
+        }
       }
+    },
+    submit() {
+      if (!this.uploadState()) {
+        this.message = "文件未上传！";
+        this.snackbar = true;
+        return;
+      }
+      this.step += 1;
     }
   }
 }
