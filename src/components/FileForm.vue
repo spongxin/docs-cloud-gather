@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid style="width: 45%;min-width: 370px;margin: auto;">
+  <v-container fluid style="width: 40%;min-width: 380px;max-width: 100%;margin: auto;">
     <v-alert border="top" colored-border type="info" elevation="2" icon="mdi-fire">
       <div class="text-h6 font-weight-regular">
         {{ packages.title }}
@@ -7,7 +7,7 @@
       <v-divider class="my-4 info" style="opacity: 0.22"></v-divider>
       {{ packages.description }}
     </v-alert>
-    <v-stepper v-model="step">
+    <v-stepper v-model="step" style="margin-top: 0px;">
       <v-stepper-header>
         <v-stepper-step :complete="step > 1" step="1">Edit
         </v-stepper-step>
@@ -21,14 +21,14 @@
       <v-stepper-items>
         <v-stepper-content step="1">
           <v-card class="mx-auto">
-            <div v-for="item in items" :key="item.id">
-              <v-card-text>
-                <v-text-field :label="item.title" :type="item.type" :value="item.value" />
+            <v-form ref="form" v-model="valid">
+              <v-card-text v-for="item in items" :key="item.id">
+                <v-text-field :label="item.title" :type="item.type" v-model="item.value" :rules="rules" />
                 <span v-if="item.description" class="text-caption grey--text text--darken-1">
                   {{ item.description }}
                 </span>
               </v-card-text>
-            </div>
+            </v-form>
             <v-card-text>
               <v-file-input v-model="files" counter multiple prepend-icon="mdi-paperclip" truncate-length="20" placeholder="选择文件" label="文件输入">
                 <template v-slot:selection="{ index, text }">
@@ -42,7 +42,7 @@
             </v-card-text>
             <v-divider />
             <v-card-actions style="margin-top: 10px;">
-              <v-btn text>
+              <v-btn text @click="clear">
                 Clear
               </v-btn>
               <v-spacer />
@@ -79,6 +79,21 @@
           </v-card>
         </v-stepper-content>
       </v-stepper-items>
+      <v-stepper-items>
+        <v-stepper-content step="3">
+          <v-card class="mx-auto">
+            <v-card-text>
+            </v-card-text>
+            <v-divider />
+            <v-card-actions style="margin-top: 10px;">
+              <v-btn text @click="step = 1">
+                Cancel
+              </v-btn>
+              <v-spacer />
+            </v-card-actions>
+          </v-card>
+        </v-stepper-content>
+      </v-stepper-items>
     </v-stepper>
     <v-snackbar v-model="snackbar" timeout="3000">
       <strong>{{ message }}</strong>
@@ -95,6 +110,10 @@ import UploadProcess from './UploadProcess';
 
 export default {
   data: () => ({
+    valid: false,
+    rules: [
+      v => !!v || '此项为必填项',
+    ],
     packages: {
       'title': 'Sign 工程注册文件',
       'description': 'Vestibulum ullamcorper mauris at ligula. Nam pretium turpis et arcu. Ut varius tincidunt libero. Curabitur ligula sapien, tincidunt non, euismod vitae, posuere imperdiet, leo. Morbi nec metus.',
@@ -106,13 +125,15 @@ export default {
         'title': '邮箱',
         'description': 'This is the email you will use to login to your Vuetify account',
         'type': 'text',
-        'value': '',
+        'value': 'yourmail@host.com',
+        'requeired': false,
       },
       {
         'title': '密码',
         'description': 'Please enter a password for your account',
         'type': 'password',
         'value': '',
+        'requeired': true,
       },
     ],
     files: [],
@@ -140,6 +161,9 @@ export default {
       return true;
     },
     upload() {
+      if (!this.$refs.form.validate()) {
+        return;
+      }
       this.step += 1;
       let uploaders = this.$refs.uploader;
       if (uploaders) {
@@ -150,11 +174,18 @@ export default {
     },
     submit() {
       if (!this.uploadState()) {
-        this.message = "文件未上传！";
+        this.message = "请上传文件后再试！";
         this.snackbar = true;
         return;
       }
       this.step += 1;
+    },
+    clear() {
+      /*for (var i = this.items.length - 1; i >= 0; i--) {
+        this.items[i].value = '';
+      }*/
+      this.$refs.form.reset();
+      this.files = [];
     }
   }
 }

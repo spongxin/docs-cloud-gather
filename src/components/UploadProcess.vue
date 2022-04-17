@@ -32,7 +32,7 @@ export default {
         },
         error(res) {
           that.file.err = res;
-          that.buffer = 100;
+          that.value = 1;
           that.icon = 'mdi-alert-circle';
           that.color = 'error';
         },
