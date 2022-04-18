@@ -15,32 +15,25 @@
       </v-btn>
     </v-app-bar>
     <v-main>
-      <FileForm identifier="68s4efa646eawd" />
+      <router-view />
     </v-main>
     <v-footer app>
-      <div class="footer">Copyright © <a href="https://github.com/spongxin" style="text-decoration: none;color: black;">SpongXin</a> 2022.</div>
+      <div class="mx-auto footer">
+        Copyright © <a href="https://github.com/spongxin" style="text-decoration: none;color: black;">SpongXin</a> 2022.
+      </div>
     </v-footer>
   </v-app>
 </template>
-<style type="text/css">
-.footer {
-  margin: auto;
+<style lang="scss">
+#app {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  color: #2c3e50;
+}
+
+footer {
   font-size: 14px;
-  color: #757575;
 }
 </style>
-<script>
-import FileForm from './components/FileForm';
-
-export default {
-  name: 'App',
-
-  components: {
-    FileForm,
-  },
-
-  data: () => ({
-    //
-  }),
-};
-</script>

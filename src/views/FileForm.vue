@@ -106,7 +106,7 @@
   </v-container>
 </template>
 <script>
-import UploadProcess from './UploadProcess';
+import UploadProcess from '../components/UploadProcess';
 
 export default {
   data: () => ({
@@ -143,14 +143,14 @@ export default {
     message: '',
   }),
 
-  props: {
-    identifier: String,
-  },
+  props: {},
 
   components: {
     UploadProcess,
   },
-
+  created() {
+    console.log('router: ', this.$route);
+  },
   methods: {
     uploadState() {
       for (var i = this.files.length - 1; i >= 0; i--) {
@@ -181,9 +181,6 @@ export default {
       this.step += 1;
     },
     clear() {
-      /*for (var i = this.items.length - 1; i >= 0; i--) {
-        this.items[i].value = '';
-      }*/
       this.$refs.form.reset();
       this.files = [];
     }
