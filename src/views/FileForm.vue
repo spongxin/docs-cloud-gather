@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid style="width: 40%;min-width: 380px;max-width: 100%;margin: auto;">
+  <v-container fluid style="width: 40%;min-width: 380px;max-width: 95%;">
     <v-alert border="top" colored-border type="info" elevation="2" icon="mdi-fire">
       <div class="text-h6 font-weight-regular">
         {{ packages.title }}
@@ -7,7 +7,7 @@
       <v-divider class="my-4 info" style="opacity: 0.22"></v-divider>
       {{ packages.description }}
     </v-alert>
-    <v-stepper v-model="step" style="margin-top: 0px;">
+    <v-stepper v-model="step">
       <v-stepper-header>
         <v-stepper-step :complete="step > 1" step="1">Edit
         </v-stepper-step>
@@ -23,10 +23,7 @@
           <v-card class="mx-auto">
             <v-form ref="form" v-model="valid">
               <v-card-text v-for="item in items" :key="item.id">
-                <v-text-field :label="item.title" :type="item.type" v-model="item.value" :rules="rules" />
-                <span v-if="item.description" class="text-caption grey--text text--darken-1">
-                  {{ item.description }}
-                </span>
+                <v-text-field :label="item.title" :type="item.type" v-model="item.value" :rules="rules" :hint="item.description" />
               </v-card-text>
             </v-form>
             <v-card-text>
