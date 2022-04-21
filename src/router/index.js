@@ -11,7 +11,7 @@ const routes = [{
     component: GatherForm
   },
   {
-    path: '/submit',
+    path: '/submit/:unique',
     name: 'submit',
     component: FileForm
     //component: () => import( /* webpackChunkName: "about" */ '../views/AboutView.vue')

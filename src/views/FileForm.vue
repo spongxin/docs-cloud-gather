@@ -107,37 +107,17 @@ import UploadProcess from '../components/UploadProcess';
 
 export default {
   data: () => ({
+    packages: {},
+    items: [],
+    files: [],
+    token: '',
+    step: 1,
+    snackbar: false,
+    message: '',
     valid: false,
     rules: [
       v => !!v || '此项为必填项',
     ],
-    packages: {
-      'title': 'Sign 工程注册文件',
-      'description': 'Vestibulum ullamcorper mauris at ligula. Nam pretium turpis et arcu. Ut varius tincidunt libero. Curabitur ligula sapien, tincidunt non, euismod vitae, posuere imperdiet, leo. Morbi nec metus.',
-      'deadline': '',
-      'identifier': '16a8w9f44a85fhui',
-      'status': true
-    },
-    items: [{
-        'title': '邮箱',
-        'description': 'This is the email you will use to login to your Vuetify account',
-        'type': 'text',
-        'value': 'yourmail@host.com',
-        'requeired': false,
-      },
-      {
-        'title': '密码',
-        'description': 'Please enter a password for your account',
-        'type': 'password',
-        'value': '',
-        'requeired': true,
-      },
-    ],
-    files: [],
-    token: 'AXQ_kgGwAC1sBnZkwUGpgFDF0PFNNX6o7y6yAkpG:F4yLvXhDotft8JDP4wGcz7THXzs=:eyJzY29wZSI6InNwb25neGluIiwiZGVhZGxpbmUiOjE2NTAxMjA3NDl9',
-    step: 1,
-    snackbar: false,
-    message: '',
   }),
 
   props: {},
@@ -147,6 +127,7 @@ export default {
   },
   created() {
     console.log('router: ', this.$route);
+    console.log('unique: ', this.$route.params.unique);
   },
   methods: {
     uploadState() {

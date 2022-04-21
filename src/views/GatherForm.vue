@@ -1,12 +1,12 @@
 <template>
-  <v-container fluid style="width: 40%;min-width: 380px;max-width: 95%;">
-    <v-card class="mx-auto" style="padding: 20px 30px 20px 30px;">
+  <v-container fluid style="width: 98%;max-width: 750px;">
+    <v-card class="mx-auto" style="padding: 20px 30px 20px 30px;" :loading="loading">
       <v-card-title>
         <div class="text-h5 font-weight-regular">创建文档仓库</div>
       </v-card-title>
-      <v-form lazy-validation>
+      <v-form ref="form" v-model="valid" lazy-validation>
         <v-card-text>
-          <v-text-field v-model="gather.title" counter="20" label="标题" hint="文档仓库显示的名称，将作为打包文件的默认名称" prepend-icon="mdi-map-marker" required></v-text-field>
+          <v-text-field v-model="gather.title" :rules="rules" counter="20" label="标题" hint="文档仓库显示的名称，将作为打包文件的默认名称" prepend-icon="mdi-map-marker" required></v-text-field>
           <v-textarea v-model="gather.description" counter maxlength="100" hint="文档收集仓库的描述" label="描述(选填)" prepend-icon="mdi-map-marker" rows="2" clearable></v-textarea>
           <v-checkbox v-model="gather.deadline" label="设置截止时间" />
           <v-row v-if="gather.deadline">
@@ -116,21 +116,24 @@
               无填写项目
             </template>
           </v-data-table>
-          <v-tooltip top color="primary">
-            <template v-slot:activator="{ on, attrs }">
-              <v-combobox v-model="gather.formats" :items="itemTitles()" formats clearable label="重命名格式" multiple prepend-icon="mdi-filter-variant" v-bind="attrs" v-on="on">
+          <v-row>
+            <v-col cols="12" :lg="gather.formats.length > 1? 9:12">
+              <v-combobox v-model="gather.formats" :items="itemTitles()" clearable label="重命名格式" multiple prepend-icon="mdi-filter-variant">
                 <template v-slot:selection="{ attrs, item, select, selected }">
                   <v-chip v-bind="attrs" :input-value="selected" close @click="select" @click:close="chipRemove(item)">
                     <strong>{{ item }}</strong>
                   </v-chip>
                 </template>
               </v-combobox>
-            </template>
-            <span>回车保存自定义文字</span>
-          </v-tooltip>
-          <span class="text-caption grey--text text--darken-1">
-            将根据该格式重命名已收集文件，用户填写的信息将替换对应标签
-          </span>
+              <span class="text-caption grey--text text--darken-1">
+                将根据该格式重命名已收集文件，用户填写的信息将替换对应标签
+              </span>
+            </v-col>
+            <v-col cols="12" lg="3" v-if="gather.formats.length > 1">
+              <v-select v-model="gather.splitter" item-text="text" item-value="value" :items="splitItems" label="间隔符"></v-select>
+              <span class="text-caption grey--text text--darken-1">为重命名标签添加间隔符</span>
+            </v-col>
+          </v-row>
         </v-card-text>
         <v-card-text>
           <v-checkbox v-model="gather.limitsize" label="限制文件大小(MB)"></v-checkbox>
@@ -138,7 +141,7 @@
         </v-card-text>
         <v-divider />
         <v-card-actions style="margin-top: 10px;">
-          <v-btn text @click="clear">
+          <v-btn text>
             取消
           </v-btn>
           <v-spacer />
@@ -151,6 +154,8 @@
   </v-container>
 </template>
 <script>
+import * as axios from 'axios'
+
 export default {
   data: () => ({
     gather: {
@@ -168,8 +173,11 @@ export default {
       date: (new Date(Date.now() - (new Date()).getTimezoneOffset() * 60000)).toISOString().substr(0, 10),
       time: '23:59',
       formats: [],
+      splitter: '',
       maxsize: 20,
     },
+    valid: true,
+    loading: false,
     menuDate: false,
     menuTime: false,
     modalDate: false,
@@ -189,20 +197,29 @@ export default {
       'description': '',
       'type': 'text',
       'value': '',
-      'requeired': true,
+      'required': true,
     },
     defaultItem: {
       'title': '',
       'description': '',
       'type': 'text',
       'value': '',
-      'requeired': true,
+      'required': true,
     },
     typeItems: [
       { text: '文本', value: 'text' },
       { text: '数字', value: 'number' },
       { text: '密码', value: 'password' },
-    ]
+    ],
+    splitItems: [
+      { text: ' - ', value: '-' },
+      { text: ' _ ', value: '_' },
+      { text: '空 格', value: ' ' },
+      { text: '无间隔符', value: '' },
+    ],
+    rules: [
+      v => !!v || '此项为必填项',
+    ],
 
   }),
   methods: {
@@ -266,7 +283,27 @@ export default {
     },
     debug(msg) {
       console.log(msg);
-    }
+    },
+    submit() {
+      if (!this.$refs.form.validate()) {
+        return;
+      }
+      this.loading = true;
+      axios.post(
+        'http://127.0.0.1:8000/package/',
+        this.gather, {
+          headers: {
+            'Content-Type': 'application/json;charset=utf-8',
+          }
+        }
+      ).then(function(res) {
+        console.log(res);
+      }).catch(function(err) {
+        console.log(err);
+      });
+      this.loading = false;
+    },
+
   }
 }
 </script>
